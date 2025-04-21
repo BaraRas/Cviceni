@@ -1,5 +1,5 @@
 """
-projekt_3.py: třetí projekt do Engeto Online Python Akademie
+projekt_3.py: třetí projekt do Engeto Online Python Akademie, verze 2
 
 author: Barbora Rašticová
 email: rasticova.barbora@seznam.cz
@@ -12,8 +12,13 @@ import sys
 import csv
 import os
 
-def definuj_argumenty():
-    '''Vydefinuje povinné argument: url adresa, složka'''
+def definuj_argumenty() -> tuple[str, str]:
+    '''
+    Zpracuje argumenty z příkazové řádky.
+
+    Returns:
+        Tuple[str, str]: URL adresa a název složky pro uložení CSV souboru
+    '''
     parser = argparse.ArgumentParser()
     parser.add_argument("-u", "--url", 
                         type = str, 
@@ -27,8 +32,15 @@ def definuj_argumenty():
     args = parser.parse_args()
     return args.url, args.slozka
 
-def ziskej_obec(soup):
-    '''Získá názvy a čísla obcí na hlavní stránce'''
+def ziskej_obec(soup) -> list[dict[str, str]]:
+    '''
+    Extrahuje kody a názvy obcí z hlavní stránky.
+
+    Args:
+        soup: HTML strom hlavní stránky 
+    Returns:
+        list[dict[str, str]]: Seznam slovníků s kodem a názvem obce
+    '''
     vsechny_tabulky = soup.find_all("table")    # Najde všechny tabulky na zadané url adrese
     
     data_obce = []
@@ -44,8 +56,15 @@ def ziskej_obec(soup):
 
     return data_obce
 
-def extrahuj_data_z_tabulky(soup):
-    '''Získá data o hlasování z detailní stránky obce.'''
+def extrahuj_data_z_tabulky(soup) -> dict[str, str]:
+    '''
+    Získá volební data z detailní stránky obce.
+
+    Args:
+        soup: HTML strom hlavní stránky 
+    Returns:
+        Dict[str, str]: Slovník s informacemi o voličích a stranách
+    '''
 
     #tabulka_1 = voliči, celkove hlasy a obálky
     tabulka_1 = soup.find_all("table")[0] # Najde všechny tabulky a vybere 1. tabulku s informacemi o celkovém počtu voličů, vydaných obálek a platných hlasů
@@ -77,8 +96,17 @@ def extrahuj_data_z_tabulky(soup):
     return result
 
 
-def hlavni_scraping(url, soup):
-    '''Scraping informací o obcích a jejich detailních stránkách'''
+def hlavni_scraping(url, soup) -> list[dict[str, str]]:
+    '''
+    Provede scraping všech obcí a jejich detailních stránek.
+
+    Args:
+        url: URL hlavní stránky
+        soup: HTLM strom hlavní stránky 
+    Returns:
+        list[dict[str, str]]: Seznam výslednů pro každou obec
+    '''
+
     obce = ziskej_obec(soup)
     vsechny_vysledky = []
 
@@ -113,7 +141,18 @@ def hlavni_scraping(url, soup):
     return vsechny_vysledky
 
 
-def vytvor_csv_soubor(soubor, url, soup): # všchny získané výsledky v podobě slovníku pak složíme do csv soubor
+def vytvor_csv_soubor(soubor: str, url: str, soup) -> str: 
+    '''
+    Vytvoří CSV soubor s výsledky voleb.
+
+    Args:
+        soubor: Cílová cesta pro výstupní soubor.
+        url: URL adresa stránky
+        soup: HTML strom hlavní stránky
+    Returns:
+        str: Zpráva o výsledku zápisu
+    '''
+    
     vysledny_soubor = hlavni_scraping(url, soup)
 
     slozka = os.path.dirname(soubor) # Získáme cestu k adresáři, ve kterém bude soubor uložen
@@ -134,7 +173,12 @@ def vytvor_csv_soubor(soubor, url, soup): # všchny získané výsledky v podob�
         return f"Soubor {soubor} již existuje" # Vrátí vyjímku pokud soubor už existuje 
 
 
-if __name__ == "__main__":
+def main() -> None:
+    '''
+    Hlavní vstupní  bod programu. 
+    Získá argumenty, načte stránku a spustí scraping + zápis výsledků
+    '''
+
     url, slozka = definuj_argumenty() #získání URL hlavní stránky a názvu složky 
 
     odpoved = requests.get(url) #Načtení stránky a vytvoření bs objektu
@@ -147,12 +191,12 @@ if __name__ == "__main__":
 
     vysledky = hlavni_scraping(url, soup) # Spuštění scrapingu s předaným HTML
     print(vysledky)
-
+    
     zprava = vytvor_csv_soubor(slozka, url, soup)
     print(zprava) # Vypíše hlášku zda byl soubor úspěšně vytvořen, či daná složka už existuje
 
-    
-
+if __name__ == "__main":
+    main()
 
     
 
